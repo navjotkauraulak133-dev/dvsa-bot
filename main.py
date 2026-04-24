@@ -1,20 +1,67 @@
 
-           for centre in CENTRES:
-                slots = fetch_slots(page, centre)
-                if slots:
-                    results[centre] = slots
-
-                time.sleep(5)
-
-            msg = format_msg(results)
-
-            if msg and msg != last_msg:
-                send_alert(msg)
-                last_msg = msg
-
-            time.sleep(CHECK_INTERVAL)
-
-        except Exception as e:
-            print("Error:", e)
-            login(page)
  
+from flask import Flask
+import threading
+import os
+import time
+import requests
+from playwright.sync_api import sync_playwright
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot is running"
+
+def run_web():
+    app.run(host="0.0.0.0", port=10000)
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+DVSA_EMAIL = os.getenv("DVSA_EMAIL")
+DVSA_PASSWORD = os.getenv("DVSA_PASSWORD")
+
+CENTRES = ["Croydon", "Mitcham", "Bromley"]
+CHECK_INTERVAL = 60
+
+def send_alert(msg):
+    requests.get(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+        params={"chat_id": CHAT_ID, "text": msg}
+    )
+
+def run_bot():
+    print("Starting DVSA bot...", flush=True)
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+
+        print("Trying DVSA login now...", flush=True)
+        page.goto("https://driverpracticaltest.dvsa.gov.uk/login")
+
+        page.fill('input[name="username"]', DVSA_EMAIL)
+        page.fill('input[name="password"]', DVSA_PASSWORD)
+        page.click('button[type="submit"]')
+
+        page.wait_for_timeout(5000)
+
+        last_msg = None
+
+        while True:
+            print("Checking DVSA now...", flush=True)
+            try:
+                results = {}
+
+                for centre in CENTRES:
+                    print(f"Checking {centre}", flush=True)
+                    time.sleep(2)
+
+                time.sleep(CHECK_INTERVAL)
+
+            except Exception as e:
+                print("Error:", e)
+
+threading.Thread(target=run_bot, daemon=True).start()
+
+run_web()
