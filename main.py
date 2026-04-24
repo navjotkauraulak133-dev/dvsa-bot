@@ -38,6 +38,7 @@ def send_alert(msg):
     )
 
 def run_bot():
+        send_alert("✅ DVSA bot thread started")
     try:
         print("Starting DVSA bot...", flush=True)
 
