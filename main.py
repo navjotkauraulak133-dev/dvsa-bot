@@ -81,6 +81,7 @@ print("Starting DVSA bot...", flush=True)
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     page = browser.new_page()
+    print("Trying DVSA login now...", flush=True)
 
     login(page)
 
