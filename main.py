@@ -3,6 +3,7 @@ import threading
 import os
 import time
 import requests
+import subprocess
 from playwright.sync_api import sync_playwright
 
 app = Flask(__name__)
@@ -19,23 +20,27 @@ CHAT_ID = os.getenv("CHAT_ID")
 DVSA_EMAIL = os.getenv("DVSA_EMAIL")
 DVSA_PASSWORD = os.getenv("DVSA_PASSWORD")
 
-CENTRES = ["Croydon", "Mitcham", "Bromley"]
-CHECK_INTERVAL = 60
-
 def send_alert(msg):
     try:
         requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-            params={"chat_id": CHAT_ID, "text": msg}
+            params={"chat_id": CHAT_ID, "text": msg},
+            timeout=10
         )
-    except:
-        print("Telegram failed", flush=True)
+    except Exception as e:
+        print("Telegram failed:", e, flush=True)
 
 def run_bot():
     send_alert("✅ DVSA bot thread started")
-    print("Starting DVSA bot...", flush=True)
 
     try:
+        send_alert("Installing Playwright browser...")
+        subprocess.run(
+            ["python", "-m", "playwright", "install", "chromium"],
+            check=True
+        )
+        send_alert("Browser installed")
+
         send_alert("1️⃣ Starting Playwright")
 
         with sync_playwright() as p:
@@ -48,19 +53,7 @@ def run_bot():
             send_alert("4️⃣ Opening DVSA login page")
             page.goto("https://driverpracticaltest.dvsa.gov.uk/login", timeout=60000)
 
-            send_alert("5️⃣ Filling username")
-            page.fill('input[name="username"]', DVSA_EMAIL)
-
-            send_alert("6️⃣ Filling password")
-            page.fill('input[name="password"]', DVSA_PASSWORD)
-
-            send_alert("7️⃣ Clicking login")
-            page.click('button[type="submit"]')
-
-            send_alert("8️⃣ Waiting after login")
-            page.wait_for_timeout(5000)
-
-            send_alert("✅ Login step finished")
+            send_alert("5️⃣ DVSA page opened")
 
             while True:
                 send_alert("🔁 Bot running...")
