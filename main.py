@@ -90,6 +90,7 @@ with sync_playwright() as p:
     last_msg = None
 
     while True:
+        print("Checking DVSA now...", flush=True)
         try:
             results = {}
 
