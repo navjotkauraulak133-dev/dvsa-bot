@@ -18,10 +18,10 @@ def run_web():
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-DVSA_EMAIL = os.getenv("DVSA_EMAIL")
-DVSA_PASSWORD = os.getenv("DVSA_PASSWORD")
 
-bot_started = False
+# 🔒 lock to prevent multiple threads
+lock = threading.Lock()
+bot_running = False
 
 def send_alert(msg):
     try:
@@ -34,30 +34,27 @@ def send_alert(msg):
         print("Telegram failed:", e, flush=True)
 
 def run_bot():
-    global bot_started
+    global bot_running
 
-    if bot_started:
-        return
+    with lock:
+        if bot_running:
+            return
+        bot_running = True
 
-    bot_started = True
+    print("Bot starting...", flush=True)
     send_alert("✅ DVSA bot started")
 
     try:
-        # Install browser (only once per deploy)
-        print("Installing Playwright browser...", flush=True)
+        # Install browser ONCE
         subprocess.run(
             ["python", "-m", "playwright", "install", "chromium"],
             check=True
         )
-        print("Browser installed", flush=True)
 
         with sync_playwright() as p:
-            print("Launching browser...", flush=True)
             browser = p.chromium.launch(headless=True)
-
             page = browser.new_page()
 
-            print("Opening DVSA login page...", flush=True)
             page.goto(
                 "https://driverpracticaltest.dvsa.gov.uk/login",
                 timeout=60000
@@ -65,10 +62,9 @@ def run_bot():
 
             send_alert("✅ DVSA page opened")
 
-            # LOOP (NO TELEGRAM SPAM)
+            # 🔁 LOOP (no spam)
             while True:
-                print("Bot running...", flush=True)
-                time.sleep(60)
+                time.sleep(120)  # every 2 mins
 
     except Exception as e:
         send_alert(f"❌ ERROR: {e}")
