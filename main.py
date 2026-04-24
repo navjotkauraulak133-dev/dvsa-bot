@@ -18,10 +18,6 @@ def send_alert(msg):
 
 def run_bot():
     print("Bot starting...", flush=True)
-
-    # ❌ DO NOT reinstall browser every time
-    # Remove subprocess install completely
-
     send_alert("✅ DVSA bot started")
 
     with sync_playwright() as p:
@@ -32,10 +28,8 @@ def run_bot():
 
         send_alert("✅ DVSA page opened")
 
-        # 🔁 Loop WITHOUT spam
         while True:
-            print("Running silently...", flush=True)
-            time.sleep(180)  # every 3 mins
+            time.sleep(180)  # no spam
 
 if __name__ == "__main__":
     run_bot()
