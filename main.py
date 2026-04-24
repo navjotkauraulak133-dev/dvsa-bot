@@ -40,33 +40,32 @@ def run_bot():
         return
 
     bot_started = True
-    send_alert("✅ DVSA bot thread started")
+    send_alert("✅ DVSA bot started")
 
     try:
-        send_alert("Installing Playwright browser...")
+        # Install browser (only once per deploy)
+        print("Installing Playwright browser...", flush=True)
         subprocess.run(
             ["python", "-m", "playwright", "install", "chromium"],
             check=True
         )
-        send_alert("Browser installed")
-
-        send_alert("1️⃣ Starting Playwright")
+        print("Browser installed", flush=True)
 
         with sync_playwright() as p:
-            send_alert("2️⃣ Launching browser")
+            print("Launching browser...", flush=True)
             browser = p.chromium.launch(headless=True)
 
-            send_alert("3️⃣ Opening page")
             page = browser.new_page()
 
-            send_alert("4️⃣ Opening DVSA login page")
+            print("Opening DVSA login page...", flush=True)
             page.goto(
                 "https://driverpracticaltest.dvsa.gov.uk/login",
                 timeout=60000
             )
 
-            send_alert("5️⃣ DVSA page opened")
+            send_alert("✅ DVSA page opened")
 
+            # LOOP (NO TELEGRAM SPAM)
             while True:
                 print("Bot running...", flush=True)
                 time.sleep(60)
