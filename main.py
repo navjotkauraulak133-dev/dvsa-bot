@@ -51,7 +51,10 @@ def run_bot():
             page = browser.new_page()
 
             send_alert("4️⃣ Opening DVSA login page")
-            page.goto("https://driverpracticaltest.dvsa.gov.uk/login", timeout=60000)
+            page.goto(
+                "https://driverpracticaltest.dvsa.gov.uk/login",
+                timeout=60000
+            )
 
             send_alert("5️⃣ DVSA page opened")
 
@@ -63,6 +66,6 @@ def run_bot():
         send_alert(f"❌ ERROR: {e}")
         print("Error:", e, flush=True)
 
-threading.Thread(target=run_bot, daemon=True).start()
-
-run_web()
+if __name__ == "__main__":
+    threading.Thread(target=run_bot, daemon=True).start()
+    run_web()
