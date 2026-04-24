@@ -1,9 +1,5 @@
 from flask import Flask
-import threading
-import os
-import time
-import requests
-import subprocess
+import threading, os, time, requests, subprocess
 from playwright.sync_api import sync_playwright
 
 app = Flask(__name__)
@@ -18,6 +14,10 @@ def run_web():
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
+DVSA_EMAIL = os.getenv("DVSA_EMAIL")
+DVSA_PASSWORD = os.getenv("DVSA_PASSWORD")
+
+CENTRES = ["Bromley", "Gillingham", "Sevenoaks", "Birmingham", "London", "Croydon"]
 
 def send_alert(msg):
     try:
@@ -31,31 +31,47 @@ def send_alert(msg):
 
 def run_bot():
     try:
-        print("Installing Chromium...", flush=True)
         subprocess.run(
             ["python", "-m", "playwright", "install", "chromium"],
             check=True
         )
 
-        send_alert("✅ DVSA bot started")
+        send_alert("✅ DVSA checker started")
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
 
-            page.goto(
-                "https://driverpracticaltest.dvsa.gov.uk/login",
-                timeout=60000
-            )
+            send_alert("Opening DVSA login page")
+            page.goto("https://driverpracticaltest.dvsa.gov.uk/login", timeout=60000)
 
-            send_alert("✅ DVSA page opened")
+            send_alert("DVSA page opened")
 
             while True:
-                print("Bot running silently...", flush=True)
-                time.sleep(180)
+                try:
+                    page_text = page.inner_text("body")
+
+                    found = []
+                    for centre in CENTRES:
+                        if centre.lower() in page_text.lower():
+                            found.append(centre)
+
+                    if found:
+                        send_alert(
+                            "🚨 Possible DVSA centre found:\n\n"
+                            + "\n".join(found)
+                            + "\n\nCheck now:\nhttps://driverpracticaltest.dvsa.gov.uk/login"
+                        )
+
+                    print("Checked DVSA page", flush=True)
+                    time.sleep(180)
+
+                except Exception as e:
+                    send_alert(f"❌ Check error: {e}")
+                    time.sleep(180)
 
     except Exception as e:
-        send_alert(f"❌ ERROR: {e}")
+        send_alert(f"❌ Bot error: {e}")
         print("Error:", e, flush=True)
 
 if __name__ == "__main__":
