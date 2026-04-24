@@ -13,12 +13,15 @@ def home():
     return "Bot is running"
 
 def run_web():
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 DVSA_EMAIL = os.getenv("DVSA_EMAIL")
 DVSA_PASSWORD = os.getenv("DVSA_PASSWORD")
+
+bot_started = False
 
 def send_alert(msg):
     try:
@@ -31,6 +34,12 @@ def send_alert(msg):
         print("Telegram failed:", e, flush=True)
 
 def run_bot():
+    global bot_started
+
+    if bot_started:
+        return
+
+    bot_started = True
     send_alert("✅ DVSA bot thread started")
 
     try:
