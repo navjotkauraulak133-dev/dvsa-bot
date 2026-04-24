@@ -17,6 +17,13 @@ def run_web():
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
+print("MAIN.PY STARTED", flush=True)
+
+requests.get(
+    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+    params={"chat_id": CHAT_ID, "text": "✅ Render bot started"},
+    timeout=10
+)
 DVSA_EMAIL = os.getenv("DVSA_EMAIL")
 DVSA_PASSWORD = os.getenv("DVSA_PASSWORD")
 
