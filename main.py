@@ -19,6 +19,10 @@ def run_web():
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
+EMAIL = os.getenv("DVSA_EMAIL")
+PASSWORD = os.getenv("DVSA_PASSWORD")
+BOOKING = os.getenv("DVSA_BOOKING_REF")
+
 def send_alert(msg):
     try:
         requests.get(
@@ -26,18 +30,15 @@ def send_alert(msg):
             params={"chat_id": CHAT_ID, "text": msg},
             timeout=10
         )
-    except Exception as e:
-        print("Telegram failed:", e, flush=True)
+    except:
+        pass
 
 def run_bot():
     try:
-        print("Installing Chromium at runtime...", flush=True)
         subprocess.run(
             ["python", "-m", "playwright", "install", "chromium"],
             check=True
         )
-
-        send_alert("✅ DVSA checker started")
 
         with sync_playwright() as p:
             browser = p.chromium.launch(
@@ -46,22 +47,41 @@ def run_bot():
             )
 
             page = browser.new_page()
-            send_alert("Opening DVSA login page")
 
-            page.goto(
-                "https://driverpracticaltest.dvsa.gov.uk/login",
-                timeout=60000
-            )
-
-            send_alert("✅ DVSA page opened")
+            send_alert("🚀 DVSA bot started")
 
             while True:
-                print("Bot running...", flush=True)
-                time.sleep(180)
+                try:
+                    print("Checking DVSA...", flush=True)
+
+                    # open login
+                    page.goto("https://driverpracticaltest.dvsa.gov.uk/login", timeout=60000)
+
+                    # fill login
+                    page.fill("#driving-licence-number", BOOKING)
+                    page.fill("#application-reference", EMAIL)
+                    page.fill("#booking-reference", PASSWORD)
+
+                    page.click("button[type=submit]")
+
+                    page.wait_for_timeout(5000)
+
+                    # check page content
+                    content = page.content()
+
+                    if "No tests available" not in content:
+                        send_alert("🔥 SLOT FOUND! Check NOW")
+                    else:
+                        print("No slots", flush=True)
+
+                    time.sleep(300)
+
+                except Exception as e:
+                    send_alert(f"❌ Error: {e}")
+                    time.sleep(60)
 
     except Exception as e:
-        send_alert(f"❌ ERROR: {e}")
-        print("Error:", e, flush=True)
+        send_alert(f"❌ Crash: {e}")
 
 if __name__ == "__main__":
     threading.Thread(target=run_bot, daemon=True).start()
