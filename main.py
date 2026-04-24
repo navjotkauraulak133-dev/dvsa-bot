@@ -3,6 +3,7 @@ import threading
 import os
 import time
 import requests
+import subprocess
 from playwright.sync_api import sync_playwright
 
 app = Flask(__name__)
@@ -30,6 +31,12 @@ def send_alert(msg):
 
 def run_bot():
     try:
+        print("Installing Chromium...", flush=True)
+        subprocess.run(
+            ["python", "-m", "playwright", "install", "chromium"],
+            check=True
+        )
+
         send_alert("✅ DVSA bot started")
 
         with sync_playwright() as p:
