@@ -3,6 +3,7 @@ import threading
 import os
 import time
 import requests
+import subprocess
 from playwright.sync_api import sync_playwright
 
 app = Flask(__name__)
@@ -10,6 +11,10 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     return "Bot is running"
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -24,16 +29,14 @@ def send_alert(msg):
     except Exception as e:
         print("Telegram failed:", e, flush=True)
 
-# 🔒 Prevent multiple runs
-bot_started = False
-
 def run_bot():
-    global bot_started
-    if bot_started:
-        return
-    bot_started = True
-
     try:
+        print("Installing Chromium...", flush=True)
+        subprocess.run(
+            ["python", "-m", "playwright", "install", "chromium"],
+            check=True
+        )
+
         send_alert("✅ DVSA checker started")
 
         with sync_playwright() as p:
@@ -41,7 +44,6 @@ def run_bot():
             page = browser.new_page()
 
             send_alert("Opening DVSA login page")
-
             page.goto(
                 "https://driverpracticaltest.dvsa.gov.uk/login",
                 timeout=60000
@@ -50,17 +52,13 @@ def run_bot():
             send_alert("✅ DVSA page opened")
 
             while True:
-                print("Bot running...", flush=True)
+                print("Bot running silently...", flush=True)
                 time.sleep(180)
 
     except Exception as e:
         send_alert(f"❌ ERROR: {e}")
         print("Error:", e, flush=True)
 
-def run_web():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
-
 if __name__ == "__main__":
-    threading.Thread(target=run_bot).start()
+    threading.Thread(target=run_bot, daemon=True).start()
     run_web()
