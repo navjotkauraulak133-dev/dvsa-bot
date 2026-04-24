@@ -77,6 +77,7 @@ def format_msg(data):
     return msg
 
 
+print("Starting DVSA bot...", flush=True)
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     page = browser.new_page()
