@@ -68,8 +68,8 @@ def run_bot():
             send_alert("5️⃣ DVSA page opened")
 
             while True:
-                print("Bot running...", flush=True)
-                time.sleep(60)
+    print("Bot running...", flush=True)
+    time.sleep(60)
 
     except Exception as e:
         send_alert(f"❌ ERROR: {e}")
