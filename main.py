@@ -33,6 +33,7 @@ def send_alert(msg):
         params={"chat_id": CHAT_ID, "text": msg}
     )
 
+print("Trying DVSA login now...", flush=True)
 def login(page):
     page.goto("https://driverpracticaltest.dvsa.gov.uk/login")
 
