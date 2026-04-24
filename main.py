@@ -1,8 +1,19 @@
+from flask import Flask
+import threading
 import os
 import time
 import requests
-import subprocess
 from playwright.sync_api import sync_playwright
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot is running"
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -18,14 +29,8 @@ def send_alert(msg):
         print("Telegram failed:", e, flush=True)
 
 def run_bot():
-    send_alert("✅ DVSA bot started")
-
     try:
-        print("Installing browser...", flush=True)
-        subprocess.run(
-            ["python", "-m", "playwright", "install", "chromium"],
-            check=True
-        )
+        send_alert("✅ DVSA bot started")
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -47,4 +52,5 @@ def run_bot():
         print("Error:", e, flush=True)
 
 if __name__ == "__main__":
-    run_bot()
+    threading.Thread(target=run_bot, daemon=True).start()
+    run_web()
