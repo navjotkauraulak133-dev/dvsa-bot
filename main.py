@@ -17,6 +17,7 @@ import requests
 from playwright.sync_api import sync_playwright
 import os
 os.system("playwright install chromium")
+print("Chromium installed, starting bot...", flush=True)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
