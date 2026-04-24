@@ -40,7 +40,21 @@ def run_bot():
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
+            
+print("Opening DVSA login page...", flush=True)
+page.goto("https://driverpracticaltest.dvsa.gov.uk/login", timeout=60000)
 
+print("Filling username...", flush=True)
+page.fill('input[name="username"]', DVSA_EMAIL)
+
+print("Filling password...", flush=True)
+page.fill('input[name="password"]', DVSA_PASSWORD)
+
+print("Clicking login...", flush=True)
+page.click('button[type="submit"]')
+
+print("Login clicked, waiting...", flush=True)
+page.wait_for_timeout(5000)
             print("Logging into DVSA...", flush=True)
 
             page.goto("https://driverpracticaltest.dvsa.gov.uk/login")
