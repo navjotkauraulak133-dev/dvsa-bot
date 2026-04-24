@@ -3,7 +3,8 @@ import threading
 import os
 import time
 import requests
-from playwright.sync_api import sync_playwright
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 app = Flask(__name__)
 
@@ -32,26 +33,21 @@ def run_bot():
     try:
         send_alert("✅ DVSA checker started")
 
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=["--no-sandbox", "--disable-dev-shm-usage"]
-            )
+        options = Options()
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
 
-            page = browser.new_page()
+        driver = webdriver.Chrome(options=options)
 
-            send_alert("Opening DVSA login page")
+        send_alert("Opening DVSA login page")
+        driver.get("https://driverpracticaltest.dvsa.gov.uk/login")
 
-            page.goto(
-                "https://driverpracticaltest.dvsa.gov.uk/login",
-                timeout=60000
-            )
+        send_alert("✅ DVSA page opened")
 
-            send_alert("✅ DVSA page opened")
-
-            while True:
-                print("Bot running...", flush=True)
-                time.sleep(180)
+        while True:
+            print("Bot running...", flush=True)
+            time.sleep(180)
 
     except Exception as e:
         send_alert(f"❌ ERROR: {e}")
