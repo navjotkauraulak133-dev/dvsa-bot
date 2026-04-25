@@ -35,43 +35,61 @@ def must(value, name):
 
 def run_bot():
     try:
-        subprocess.run(["python", "-m", "playwright", "install", "chromium"], check=True)
+        subprocess.run(
+            ["python", "-m", "playwright", "install", "chromium"],
+            check=True
+        )
 
         email = must(EMAIL, "DVSA_EMAIL")
         password = must(PASSWORD, "DVSA_PASSWORD")
         booking = must(BOOKING, "DVSA_BOOKING_REF")
+
+        send_alert("🚀 DVSA bot started")
 
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
                 args=["--no-sandbox", "--disable-dev-shm-usage"]
             )
-            page = browser.new_page()
 
-            send_alert("🚀 DVSA bot started")
+            page = browser.new_page()
 
             while True:
                 try:
-                    page.goto("https://driverpracticaltest.dvsa.gov.uk/login", timeout=60000)
+                    print("Checking DVSA...", flush=True)
 
-                    page.fill("#driving-licence-number", booking)
-                    page.fill("#application-reference", email)
-                    page.fill("#booking-reference", password)
+                    page.goto(
+                        "https://driverpracticaltest.dvsa.gov.uk/login",
+                        timeout=60000
+                    )
+
+                    page.wait_for_load_state("networkidle")
+
+                    page.wait_for_selector(
+                        'input[name="drivingLicenceNumber"]',
+                        timeout=60000
+                    )
+
+                    page.fill('input[name="drivingLicenceNumber"]', booking)
+                    page.fill('input[name="applicationReferenceNumber"]', email)
+                    page.fill('input[name="bookingReference"]', password)
 
                     page.click("button[type=submit]")
+
                     page.wait_for_timeout(5000)
 
                     content = page.content()
 
                     if "No tests available" not in content:
-                        send_alert("🔥 SLOT FOUND! Check NOW")
+                        send_alert("🔥 POSSIBLE SLOT FOUND! Check DVSA now.")
                     else:
-                        print("No slots", flush=True)
+                        print("No slots found", flush=True)
 
                     time.sleep(300)
 
                 except Exception as e:
                     send_alert(f"❌ Error: {e}")
+                    print("Error:", e, flush=True)
                     time.sleep(60)
 
     except Exception as e:
