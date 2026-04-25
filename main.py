@@ -14,7 +14,6 @@ def run_web():
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-
 LICENCE = os.getenv("DVSA_LICENCE")
 BOOKING = os.getenv("DVSA_BOOKING")
 
@@ -25,8 +24,8 @@ def send_alert(msg):
             params={"chat_id": CHAT_ID, "text": msg},
             timeout=10
         )
-    except:
-        pass
+    except Exception as e:
+        print("Telegram failed:", e, flush=True)
 
 def run_bot():
     try:
@@ -45,7 +44,6 @@ def run_bot():
                 headless=True,
                 args=["--no-sandbox", "--disable-dev-shm-usage"]
             )
-
             page = browser.new_page()
 
             while True:
@@ -59,14 +57,10 @@ def run_bot():
 
                     page.wait_for_load_state("networkidle")
 
-                    page.wait_for_selector(
-                        'input[name="drivingLicenceNumber"]',
-                        timeout=60000
-                    )
+                    page.wait_for_selector("#driving-licence-number", timeout=60000)
 
-                    # LOGIN
-                    page.fill('input[name="drivingLicenceNumber"]', LICENCE)
-                    page.fill('input[name="bookingReference"]', BOOKING)
+                    page.fill("#driving-licence-number", LICENCE)
+                    page.fill("#booking-reference", BOOKING)
 
                     page.click("button[type=submit]")
 
@@ -75,7 +69,7 @@ def run_bot():
                     content = page.content()
 
                     if "No tests available" not in content:
-                        send_alert("🔥 SLOT FOUND! Check DVSA now.")
+                        send_alert("🔥 POSSIBLE SLOT FOUND! Check DVSA now.")
                     else:
                         print("No slots found", flush=True)
 
@@ -83,11 +77,12 @@ def run_bot():
 
                 except Exception as e:
                     send_alert(f"❌ Error: {e}")
-                    print("Error:", e)
+                    print("Error:", e, flush=True)
                     time.sleep(60)
 
     except Exception as e:
         send_alert(f"❌ Crash: {e}")
+        print("Crash:", e, flush=True)
 
 if __name__ == "__main__":
     threading.Thread(target=run_bot, daemon=True).start()
