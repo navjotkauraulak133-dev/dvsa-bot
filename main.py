@@ -14,9 +14,9 @@ def run_web():
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-EMAIL = os.getenv("DVSA_EMAIL")
-PASSWORD = os.getenv("DVSA_PASSWORD")
-BOOKING = os.getenv("DVSA_BOOKING_REF")
+
+LICENCE = os.getenv("DVSA_LICENCE")
+BOOKING = os.getenv("DVSA_BOOKING")
 
 def send_alert(msg):
     try:
@@ -25,13 +25,8 @@ def send_alert(msg):
             params={"chat_id": CHAT_ID, "text": msg},
             timeout=10
         )
-    except Exception as e:
-        print("Telegram failed:", e, flush=True)
-
-def must(value, name):
-    if not value:
-        raise ValueError(f"{name} is missing in Render Environment")
-    return value
+    except:
+        pass
 
 def run_bot():
     try:
@@ -40,9 +35,8 @@ def run_bot():
             check=True
         )
 
-        email = must(EMAIL, "DVSA_EMAIL")
-        password = must(PASSWORD, "DVSA_PASSWORD")
-        booking = must(BOOKING, "DVSA_BOOKING_REF")
+        if not LICENCE or not BOOKING:
+            raise ValueError("DVSA_LICENCE or DVSA_BOOKING missing")
 
         send_alert("🚀 DVSA bot started")
 
@@ -70,9 +64,9 @@ def run_bot():
                         timeout=60000
                     )
 
-                    page.fill('input[name="drivingLicenceNumber"]', booking)
-                    page.fill('input[name="applicationReferenceNumber"]', email)
-                    page.fill('input[name="bookingReference"]', password)
+                    # LOGIN
+                    page.fill('input[name="drivingLicenceNumber"]', LICENCE)
+                    page.fill('input[name="bookingReference"]', BOOKING)
 
                     page.click("button[type=submit]")
 
@@ -81,7 +75,7 @@ def run_bot():
                     content = page.content()
 
                     if "No tests available" not in content:
-                        send_alert("🔥 POSSIBLE SLOT FOUND! Check DVSA now.")
+                        send_alert("🔥 SLOT FOUND! Check DVSA now.")
                     else:
                         print("No slots found", flush=True)
 
@@ -89,12 +83,11 @@ def run_bot():
 
                 except Exception as e:
                     send_alert(f"❌ Error: {e}")
-                    print("Error:", e, flush=True)
+                    print("Error:", e)
                     time.sleep(60)
 
     except Exception as e:
         send_alert(f"❌ Crash: {e}")
-        print("Crash:", e, flush=True)
 
 if __name__ == "__main__":
     threading.Thread(target=run_bot, daemon=True).start()
