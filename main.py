@@ -42,9 +42,16 @@ def run_bot():
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
-                args=["--no-sandbox", "--disable-dev-shm-usage"]
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-blink-features=AutomationControlled"
+                ]
             )
-            page = browser.new_page()
+
+            page = browser.new_page(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+            )
 
             while True:
                 try:
@@ -55,16 +62,20 @@ def run_bot():
                         timeout=60000
                     )
 
-                    page.wait_for_load_state("networkidle")
+                    page.wait_for_timeout(10000)
 
-                    page.wait_for_selector("#driving-licence-number", timeout=60000)
+                    html = page.content()
+
+                    if "driving-licence-number" not in html:
+                        send_alert("❌ DVSA blocked or page not loaded")
+                        time.sleep(120)
+                        continue
 
                     page.fill("#driving-licence-number", LICENCE)
                     page.fill("#booking-reference", BOOKING)
 
                     page.click("button[type=submit]")
-
-                    page.wait_for_timeout(5000)
+                    page.wait_for_timeout(7000)
 
                     content = page.content()
 
@@ -78,7 +89,7 @@ def run_bot():
                 except Exception as e:
                     send_alert(f"❌ Error: {e}")
                     print("Error:", e, flush=True)
-                    time.sleep(60)
+                    time.sleep(120)
 
     except Exception as e:
         send_alert(f"❌ Crash: {e}")
